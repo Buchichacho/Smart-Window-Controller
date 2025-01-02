@@ -43,6 +43,43 @@ def add_device(
     db.refresh(new_device)
     return new_device
 
+
+@router.get("/{device_id}", response_model=DeviceResponse)
+def get_device(
+        device_id: int,
+        db: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user),
+):
+    # Проверяем, существует ли устройство, принадлежащее текущему пользователю
+    device = db.query(Device).filter(Device.id == device_id, Device.owner_id == current_user.id).first()
+    if not device:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Device not found"
+        )
+
+    return device
+
+
+@router.delete("/{device_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_device(
+        device_id: int,
+        db: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user),
+):
+    # Проверяем, существует ли устройство, принадлежащее текущему пользователю
+    device = db.query(Device).filter(Device.id == device_id, Device.owner_id == current_user.id).first()
+    if not device:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Device not found"
+        )
+
+    # Удаляем устройство
+    db.delete(device)
+    db.commit()
+    return {"detail": "Device deleted"}
+
 @router.get("/", response_model=list[DeviceResponse])
 def get_user_devices(
     db: Session = Depends(get_db), current_user: User = Depends(get_current_user)
@@ -92,9 +129,6 @@ def control_device(
     db.commit()
     db.refresh(device)
     return device
-
-
-
 
 @router.put("/{device_id}/settings", response_model=DeviceResponse)
 def update_device_settings(
