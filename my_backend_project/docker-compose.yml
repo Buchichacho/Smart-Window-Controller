@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    container_name: fastapi_app
+    environment:
+      - DATABASE_URL=postgresql+psycopg2://myuser:mypassword@db:5432/mydatabase  # URL для PostgreSQL
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    volumes:  # Добавляем volume для приложения, чтобы отслеживать изменения в реальном времени
+      - .:/app
+
+  db:
+    image: postgres:14
+    container_name: postgres_container
+    environment:
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypassword
+      POSTGRES_DB: mydatabase
+    ports:
+      - "5432:5432"
+    volumes:  # Добавляем volume для сохранения данных базы данных
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:  # Определяем volume для базы данных
